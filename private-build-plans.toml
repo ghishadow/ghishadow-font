@@ -1,7 +1,8 @@
 [buildPlans.iosevka-custom]      # <iosevka-custom> is your plan name
-family = "Iosevka Custom"        # Font menu family name
+family = "Ghishadow Mono"        # Font menu family name
 spacing = "normal"               # Optional; Values: `normal`, `term`, `fontconfig-mono`, or `fixed`
 serifs = "sans"                  # Optional; Values: `sans` or `slab`
+no-cv-ss = true
 
 webfont-formats = ['ttf', 'woff2']
 
@@ -33,6 +34,7 @@ l = 'tailed-serifed'
 # Configure ligations
 
 [buildPlans.iosevka-custom.ligations]
+inherits = "dlig"
 inherits = "default-calt"   # Optional; inherits an existing ligation set
 disables = []               # Optional; disable specific ligation groups, overrides inherited ligation set
 enables  = []               # Optional; enable specific ligation groups, overrides inherited ligation set
