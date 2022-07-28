@@ -1,7 +1,7 @@
 [buildPlans.ghishadow-mono]      # <ghishadow-mono> is your plan name
 family = "Ghishadow Mono"        # Font menu family name
 spacing = "normal"      # Optional; Values: `normal`, `term`, `fontconfig-mono`, or `fixed`
-serifs = "slab"                  # Optional; Values: `sans` or `slab`
+serifs = "sans"                  # Optional; Values: `sans` or `slab`
 no-cv-ss = false
 
 webfont-formats = ['ttf', 'woff2']

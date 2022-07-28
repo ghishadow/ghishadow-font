@@ -682,7 +682,7 @@ async function CreateGroupArchiveFile(dir, out, ...files) {
 const Pages = task(`pages`, async t => {
 	await t.need(
 		PagesDataExport,
-		PagesFontExport`iosevka`,
+		PagesFontExport`ghishadow`,
 		PagesFontExport`iosevka-slab`,
 		PagesFontExport`iosevka-aile`,
 		PagesFontExport`iosevka-etoile`,
