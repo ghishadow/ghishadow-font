@@ -1,5 +1,20 @@
 ## Modifications since version 2.x
 
+### 15.6.1
+
+ * Add characters:
+  - BLANK SYMBOL (`U+2422`);
+  - SYMBOL FOR DELETE FORM TWO (`U+2425`);
+  - SYMBOL FOR SUBSTITUTE FORM TWO (`U+2426`);
+
+
+### 15.6.0
+
+ * Fix assignment of `r` and `w` for SS09 (#1378, #1379).
+ * Add variant selectors for Cyrillic Zhe (#1380).
+ * Harmonize dimensions of Cyrillic Yer, Yeri and Yery (#1382).
+
+
 ### 15.5.2
 
 * Add characters:

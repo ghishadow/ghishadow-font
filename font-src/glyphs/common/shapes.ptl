@@ -1,9 +1,9 @@
 $$include '../../meta/macros.ptl'
 
-import [Transform] from '../../support/geometry/transform'
+import [Transform] from"../../support/geometry/transform.mjs"
 
-import [mix linreg clamp fallback] from '../../support/utils'
-import [Radical] from '../../support/gr'
+import [mix linreg clamp fallback] from"../../support/utils.mjs"
+import [Radical] from"../../support/gr.mjs"
 
 glyph-module
 
@@ -718,6 +718,12 @@ glyph-block CommonShapes : begin
 	glyph-block-export ExtLineLhs
 	define [ExtLineLhs k sw x1 y1 x2 y2] : dispiro
 		widths.lhs sw
+		corner [mix x1 x2 (-k)]  [mix y1 y2 (-k)]
+		corner [mix x1 x2 (1+k)] [mix y1 y2 (1+k)]
+
+	glyph-block-export ExtLineRhs
+	define [ExtLineRhs k sw x1 y1 x2 y2] : dispiro
+		widths.rhs sw
 		corner [mix x1 x2 (-k)]  [mix y1 y2 (-k)]
 		corner [mix x1 x2 (1+k)] [mix y1 y2 (1+k)]
 

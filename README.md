@@ -3,6 +3,13 @@
 
 You can read the license here: [README.md](https://github.com/ghishadow/ghishadow-font/blob/master/LICENSE.md).
 
+
+## Screenshot
+
+![image](https://user-images.githubusercontent.com/9583775/180100813-828a1274-15db-4708-9af8-3f9dc5354e12.png)
+
+> Editor: [Lapce](https://lapce.dev/) Theme: [Catppuccin theme](https://github.com/ghishadow/lapce-catppuccin)
+
 ## Building Ghishadow Mono
 
 Custom configurations are set up in `private-build-plans.toml`.
