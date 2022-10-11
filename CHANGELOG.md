@@ -1,145 +1,71 @@
 ## Modifications since version 2.x
 
-### 15.6.1
+### 16.3.3
 
- * Add characters:
-  - BLANK SYMBOL (`U+2422`);
-  - SYMBOL FOR DELETE FORM TWO (`U+2425`);
-  - SYMBOL FOR SUBSTITUTE FORM TWO (`U+2426`);
+ * Fix application of CV/SS on certain composites and some of the sample images (#1433).
 
 
-### 15.6.0
+### 16.3.2
 
- * Fix assignment of `r` and `w` for SS09 (#1378, #1379).
- * Add variant selectors for Cyrillic Zhe (#1380).
- * Harmonize dimensions of Cyrillic Yer, Yeri and Yery (#1382).
-
-
-### 15.5.2
-
-* Add characters:
-  - BOWTIE WITH LEFT HALF BLACK (`U+29D1`) ... BLACK HOURGLASS (`U+29D7`) (#1370);
+ * Fix alignment of Ogonek in LATIN SMALL LETTER I WITH OGONEK (`U+012F`) at with `'cv34' = 5` (#1431).
+ * Fix soft dot of LATIN SMALL LETTER I WITH OGONEK (`U+012F`) (#1432).
 
 
-### 15.5.1
+### 16.3.1
 
-* Add characters:
-  - QUADRUPLE PRIME (`U+2057`);
-  - CARET INSERTION POINT (`U+2041`);
-  - DOTTED CROSS (`U+205C`);
-* Unhinted webfonts are added into releases.
+ * Fix shape of LATIN SMALL LETTER E WITH OGONEK (`U+0119`) (#1427).
+ * Width grade will now influence marks' width.
 
 
-### 15.5.0
+### 16.3.0
 
-* Add characters
-  - LATIN SMALL LETTER B WITH MIDDLE TILDE (`U+1D6C`) ... LATIN SMALL LETTER Z WITH MIDDLE TILDE (`U+1D76`);
-  - LATIN SMALL CAPITAL LETTER U WITH STROKE (`U+1D7E`);
-
-
-### 15.4.2
-
-* Fix ranks of `cv72` (variants applying to `1`) (#1358).
+ * Add variant selector to remove notches for equality ligations (#1425).
+ * Fix `cv40`'s application to CYRILLIC SMALL LETTER ER (`U+0440`) (#1426).
 
 
-### 15.4.1
+### 16.2.1
 
-* Fix VXDD application on U+1D1E (#1357).
+ * Fix shape of `p` @ `motion-serifed` (#1423).
 
 
-### 15.4.0
+### 16.2.0
+
+* Add ligation set for HTML/XML/React tags (`<>`, `</`, `/>` and `</>`) (#1413).
+
+
+### 16.1.0
 
 * Add characters:
-  - LATIN SMALL LETTER SIDEWAYS O (`U+1D11`);
-  - LATIN SMALL LETTER SIDEWAYS OPEN O (`U+1D12`);
-  - LATIN SMALL LETTER SIDEWAYS O WITH STROKE (`U+1D13`);
-  - LATIN SMALL LETTER SIDEWAYS U (`U+1D1D`);
-  - LATIN SMALL LETTER SIDEWAYS DIAERESIZED U (`U+1D1E`);
-  - LATIN SMALL LETTER SIDEWAYS TURNED M (`U+1D1F`);
-  - MODIFIER LETTER SMALL SIDEWAYS U (`U+1D59`);
-* Make user build plans' variants inheritable (#1345).
-* Add top-cut variants of `1` (#1354).
+  - HEAVY ROUND-TIPPED RIGHTWARDS ARROW (`U+279C`) (#1401).
+* Add ligation sets for Julia and Raku (#1386, #1391).
 
 
-### 15.3.1
+### 16.0.3
 
-* Fix display of Kleisli arrows under Kitty (#1350).
-* Ascender height and Cap height is decoupled. Now they could be configured separately (#1334).
-
-
-### 15.3.0
-
-* Add characters (#1337):
-  - SUMMATION TOP (`U+23B2`);
-  - SUMMATION BOTTOM (`U+23B3`);
-  - BLACK RIGHT-POINTING DOUBLE TRIANGLE (`U+23E9`);
-  - BLACK LEFT-POINTING DOUBLE TRIANGLE (`U+23EA`);
-  - BLACK UP-POINTING DOUBLE TRIANGLE (`U+23EB`);
-  - BLACK DOWN-POINTING DOUBLE TRIANGLE (`U+23EC`);
-  - BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR (`U+23ED`);
-  - BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR (`U+23EE`);
-  - BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR (`U+23EF`);
-* Enlarged `U+02BE` and `U+02BF` to match the dimensions of other quotes (#1346).
+* Add characters:
+  - HEAVY ROUND-TIPPED RIGHTWARDS ARROW (`U+279C`) (#1401).
 
 
-### 15.2.0
+### 16.0.2
 
- * Add characters:
-  - FLOWER PUNCTUATION MARK (`U+2055`);
-  - VERTICAL FOUR DOTS (`U+205E`);
-  - BLACK LEFTWARDS BULLET (`U+204C`);
-  - BLACK RIGHTWARDS BULLET (`U+204D`);
-  - THREE DOT PUNCTUATION (`U+2056`);
-  - FOUR DOT PUNCTUATION (`U+2058`);
-  - FIVE DOT PUNCTUATION (`U+2059`);
-  - TWO DOT PUNCTUATION (`U+205A`);
-  - FOUR DOT MARK (`U+205B`);
- * Shape adjustment of `t` (#1336).
- * Pilcrow signs are adjusted to have fills.
+ * Fix mapping of MODIFIER LETTER VERTICAL LINE (`U+02C8`) and MODIFIER LETTER LOW VERTICAL LINE (`U+02CC`) (#1407).
+ * Fix shape of LATIN SMALL LETTER T WITH CURL (`U+0236`) (#1408).
+ * Fix `cv99` application on ELEMENT OF WITH DOT ABOVE (`U+22F5`) (#1409).
+ * Fix `cv33` application on Hwair (`U+0195`) (#1410).
+ * Fix letterform of Cyrillic Small Letter Ghe With Upturn under Italic.
 
 
-### 15.1.0
+### 16.0.1
 
-* Add Characters
-  - MODIFIER LETTER YIN DEPARTING TONE MARK (`U+02EA`);
-  - MODIFIER LETTER YANG DEPARTING TONE MARK (`U+02EB`);
-  - MODIFIER LETTER DOUBLE APOSTROPHE (`U+02EE`);
-  - MODIFIER LETTER MIDDLE GRAVE ACCENT (`U+02F4`);
-  - MODIFIER LETTER MIDDLE DOUBLE GRAVE ACCENT (`U+02F5`);
-  - MODIFIER LETTER MIDDLE DOUBLE ACUTE ACCENT (`U+02F6`);
-  - MODIFIER LETTER RAISED COLON (`U+02F8`);
-  - MODIFIER LETTER BEGIN HIGH TONE (`U+02F9`);
-  - MODIFIER LETTER END HIGH TONE (`U+02FA`);
-  - MODIFIER LETTER BEGIN LOW TONE (`U+02FB`);
-  - MODIFIER LETTER END LOW TONE (`U+02FC`);
-  - MODIFIER LETTER SHELF (`U+02FD`);
-  - MODIFIER LETTER OPEN SHELF (`U+02FE`);
-  - MODIFIER LETTER LOW LEFT ARROW (`U+02FF`);
-  - COMBINING LEFT ARROW BELOW (`U+20EE`);
-  - COMBINING RIGHT ARROW BELOW (`U+20EF`);
+ * Fix `cv99` application on ASCII single quotes and graves (#1404).
+ * Fix `cv44` application on certain t-derived letters (`U+01AB`, `U+0236`, `U+0288`, `U+1DB5`, and `U+20A7`) (#1405).
+ * Fix shape of BLANK SYMBOL (`U+2422`, #1406).
 
 
-### 15.0.3
+### 16.0.0
 
- * Add Asterism (`U+2042`) character (#1324).
-
-
-### 15.0.2
-
- * Fix placement of COMBINING DOT ABOVE RIGHT (`U+0358`) (#1318).
- * Fix fourfold width of `@` under quasi-proportionals (#1319).
-
-
-### 15.0.1
-
- * Fix `cv99`/`VXDD` applications on `U+0149`, `U+0310`, `U+034B`, `U+0352`, `U+037C`, `U+037D`, `U+03FE`, `U+03FF`, `U+1E0B`, and `U+1EF5` (#1317).
-
-
-### 15.0.0
-
- * \[**Breaking**\] Metric override name change: `xheight` → `xHeight`.
- * Add variant selector for dot and comma diacritics (#1309).
- * Fix enclosed glyphs' placement when having glyphs with different Y-shifting (#1310).
- * Add metric override for `archDepth` and `smallArchDepth` (#1313).
- * Fix feature application on OBJECT REPLACEMENT CHARACTER (`U+FFFC`) and REPLACEMENT CHARACTER (`U+FFFD`) (#1314).
+ * \[**Breaking**\] Change the mechanism of variants of not-equal ligation (#1400):
+   - The "dotted" ligation groups (`exeqeq-dotted`, `eqexeq-dotted`, `eqexeq-dl-dotted`, `exeq-dotted`) are removed.
+   - A character variant, "lig-neq" (feature tag `VXAF`), is added to control the shape instead.
+ * Ensure that the middle point between Typo Ascender and Descender lies on the middle of symbols/operators (#1398).
 

@@ -5,18 +5,32 @@
 
 <table>
 <tr>
-<td><code>dlig</code></td>
-<td>Discretionary ligatures</td>
-</tr>
-<tr>
-<td colspan="2"><img src="../images/ligset-dlig-1.light.svg#gh-light-mode-only"/><img src="../images/ligset-dlig-1.dark.svg#gh-dark-mode-only"/></td>
-</tr>
-<tr>
-<td><code>CLIK</code>; <code>JSPT</code>; <code>PHPX</code></td>
-<td>C-Like, JavaScript, PHP</td>
+<td><code>CLIK</code>; <code>JSPT</code></td>
+<td>C-Like, JavaScript</td>
 </tr>
 <tr>
 <td colspan="2"><img src="../images/ligset-CLIK-1.light.svg#gh-light-mode-only"/><img src="../images/ligset-CLIK-1.dark.svg#gh-dark-mode-only"/></td>
+</tr>
+<tr>
+<td><code>PHPX</code></td>
+<td>PHP</td>
+</tr>
+<tr>
+<td colspan="2"><img src="../images/ligset-PHPX-1.light.svg#gh-light-mode-only"/><img src="../images/ligset-PHPX-1.dark.svg#gh-dark-mode-only"/></td>
+</tr>
+<tr>
+<td><code>JLIA</code></td>
+<td>Julia</td>
+</tr>
+<tr>
+<td colspan="2"><img src="../images/ligset-JLIA-1.light.svg#gh-light-mode-only"/><img src="../images/ligset-JLIA-1.dark.svg#gh-dark-mode-only"/></td>
+</tr>
+<tr>
+<td><code>RAKU</code></td>
+<td>Raku</td>
+</tr>
+<tr>
+<td colspan="2"><img src="../images/ligset-RAKU-1.light.svg#gh-light-mode-only"/><img src="../images/ligset-RAKU-1.dark.svg#gh-dark-mode-only"/></td>
 </tr>
 <tr>
 <td><code>MLXX</code>; <code>FSHP</code></td>

@@ -2,6 +2,7 @@ import * as FS from "fs";
 import * as Path from "path";
 
 import * as toml from "@iarna/toml";
+import deepEqual from "deep-equal";
 import semver from "semver";
 import * as uuid from "uuid";
 import * as Verda from "verda";
@@ -10,7 +11,7 @@ import which from "which";
 ///////////////////////////////////////////////////////////
 
 export const build = Verda.create();
-const { task, file, oracle, computed, phony } = build.ruleTypes;
+const { task, file, oracle, computed } = build.ruleTypes;
 const { de, fu, sfu, ofu } = build.rules;
 const { run, node, cd, cp, rm, fail, echo, silently } = build.actions;
 const { FileList } = build.predefinedFuncs;
@@ -20,12 +21,18 @@ const { FileList } = build.predefinedFuncs;
 const BUILD = ".build";
 const DIST = "dist";
 const IMAGES = "images";
+
 const IMAGE_TASKS = ".build/image-tasks";
+const GLYF_TTC = ".build/glyf-ttc";
+
+const SHARED_CACHE = `${BUILD}/cache`;
+const DIST_TTC = "dist/.ttc";
 const DIST_SUPER_TTC = "dist/.super-ttc";
 const ARCHIVE_DIR = "release-archives";
 
 const PATEL_C = ["node", "node_modules/patel/bin/patel-c"];
 const TTCIZE = ["node", "node_modules/otb-ttc-bundle/bin/otb-ttc-bundle"];
+const SEVEN_ZIP = process.env.SEVEN_ZIP_PATH || "7z";
 
 const defaultWebFontFormats = ["ttf", "woff2"];
 const webfontFormatsFast = ["ttf"];
@@ -143,8 +150,43 @@ const BuildPlans = computed("metadata:build-plans", async target => {
 		}
 		returnBuildPlans[prefix] = bp;
 	}
+	linkSpacingDerivableBuildPlans(returnBuildPlans);
 	return { fileNameToBpMap, buildPlans: returnBuildPlans };
 });
+
+function linkSpacingDerivableBuildPlans(bps) {
+	for (const pfxTo in bps) {
+		const planTo = bps[pfxTo];
+		const planToVal = rectifyPlanForSpacingDerivation(planTo);
+		if (!isLinkDeriveToSpacing(planTo.spacing)) continue;
+		for (const pfxFrom in bps) {
+			const planFrom = bps[pfxFrom];
+			if (!isLinkDeriveFromSpacing(planFrom.spacing)) continue;
+			const planFromVal = rectifyPlanForSpacingDerivation(planFrom);
+			if (!deepEqual(planToVal, planFromVal)) continue;
+			planTo.spacingDeriveFrom = pfxFrom;
+		}
+	}
+}
+
+function isLinkDeriveToSpacing(spacing) {
+	return spacing === "term" || spacing === "fontconfig-mono" || spacing === "fixed";
+}
+function isLinkDeriveFromSpacing(spacing) {
+	return !spacing || spacing === "normal";
+}
+
+function rectifyPlanForSpacingDerivation(p) {
+	return {
+		...p,
+		family: "#Validation",
+		desc: "#Validation",
+		spacing: "#Validation",
+		snapshotFamily: null,
+		snapshotFeature: null,
+		targets: null
+	};
+}
 
 const BuildPlanOf = computed.group("metadata:build-plan-of", async (target, gid) => {
 	const [{ buildPlans }] = await target.need(BuildPlans);
@@ -183,6 +225,15 @@ const FontInfoOf = computed.group("metadata:font-info-of", async (target, fileNa
 	const sfm = getSuffixMapping(bp.weights, bp.slopes, bp.widths);
 	const sfi = sfm[fi0.suffix];
 	const hintReferenceSuffix = fetchHintReferenceSuffix(sfm);
+
+	let spacingDerive = null;
+	if (bp.spacingDeriveFrom) {
+		spacingDerive = {
+			manner: bp.spacing,
+			prefix: bp.spacingDeriveFrom,
+			fileName: makeFileName(bp.spacingDeriveFrom, fi0.suffix)
+		};
+	}
 
 	return {
 		name: fileName,
@@ -225,7 +276,10 @@ const FontInfoOf = computed.group("metadata:font-info-of", async (target, fileNa
 				: null,
 		compatibilityLigatures: bp["compatibility-ligatures"] || null,
 		metricOverride: bp["metric-override"] || null,
-		excludedCharRanges: bp["exclude-chars"]?.ranges
+		excludedCharRanges: bp["exclude-chars"]?.ranges,
+
+		// Spacing derivation -- creating faster build for spacing variants
+		spacingDerive
 	};
 });
 
@@ -316,41 +370,64 @@ const ageKey = uuid.v4();
 const DistUnhintedTTF = file.make(
 	(gr, fn) => `${DIST}/${gr}/ttf-unhinted/${fn}.ttf`,
 	async (target, out, gr, fn) => {
-		await target.need(Scripts, Parameters, Dependencies, de(`${BUILD}/caches`));
-		const [compositesFromBuildPlan] = await target.need(CompositesFromBuildPlan);
-		const charMapDir = `${BUILD}/ttf/${gr}`;
-		const charMapPath = `${charMapDir}/${fn}.charmap.mpz`;
+		await target.need(Scripts, Parameters, Dependencies, de(out.dir));
+		const [fi] = await target.need(FontInfoOf(fn));
 
-		const [fi] = await target.need(FontInfoOf(fn), de(out.dir), de(charMapDir));
-		const cacheFileName =
-			`${Math.round(1000 * fi.shape.weight)}-${Math.round(1000 * fi.shape.width)}-` +
-			`${Math.round(3600 * fi.shape.slopeAngle)}-${fi.shape.slope}`;
-		const cachePath = `${BUILD}/caches/${cacheFileName}.mpz`;
-		const cacheDiffPath = `${charMapDir}/${fn}.cache.mpz`;
+		if (fi.spacingDerive) {
+			// The font is a spacing variant, and is derivable form an existing
+			// normally-spaced variant.
+			const spD = fi.spacingDerive;
+			const [deriveFrom] = await target.need(DistUnhintedTTF(spD.prefix, spD.fileName));
 
-		echo.action(echo.hl.command(`Create TTF`), fn, echo.hl.operator("->"), out.full);
-		const { cacheUpdated } = await silently.node("font-src/index.mjs", {
-			o: out.full,
-			oCharMap: charMapPath,
-			cacheFreshAgeKey: ageKey,
-			iCache: cachePath,
-			oCache: cacheDiffPath,
-			compositesFromBuildPlan,
-			...fi
-		});
-		if (cacheUpdated) {
-			const lock = build.locks.alloc(cacheFileName);
-			await lock.acquire();
-			await silently.node(`font-src/merge-cache.mjs`, {
-				base: cachePath,
-				diff: cacheDiffPath,
-				version: fi.menu.version,
-				freshAgeKey: ageKey
+			echo.action(echo.hl.command(`Create TTF`), fn, echo.hl.operator("->"), out.full);
+			await silently.node(`font-src/derive-spacing.mjs`, {
+				i: deriveFrom.full,
+				o: out.full,
+				...fi
 			});
-			lock.release();
+		} else {
+			// Ab-initio build
+			const charMapDir = `${BUILD}/ttf/${gr}`;
+			const charMapPath = `${charMapDir}/${fn}.charmap.mpz`;
+
+			const cacheFileName =
+				`${Math.round(1000 * fi.shape.weight)}-${Math.round(1000 * fi.shape.width)}-` +
+				`${Math.round(3600 * fi.shape.slopeAngle)}-${fi.shape.slope}`;
+			const cachePath = `${SHARED_CACHE}/${cacheFileName}.mpz`;
+			const cacheDiffPath = `${charMapDir}/${fn}.cache.mpz`;
+
+			const [comps] = await target.need(
+				CompositesFromBuildPlan,
+				de(charMapDir),
+				de(SHARED_CACHE)
+			);
+
+			echo.action(echo.hl.command(`Create TTF`), fn, echo.hl.operator("->"), out.full);
+			const { cacheUpdated } = await silently.node("font-src/index.mjs", {
+				o: out.full,
+				oCharMap: charMapPath,
+				cacheFreshAgeKey: ageKey,
+				iCache: cachePath,
+				oCache: cacheDiffPath,
+				compositesFromBuildPlan: comps,
+				...fi
+			});
+
+			if (cacheUpdated) {
+				const lock = build.locks.alloc(cacheFileName);
+				await lock.acquire();
+				await silently.node(`font-src/merge-cache.mjs`, {
+					base: cachePath,
+					diff: cacheDiffPath,
+					version: fi.menu.version,
+					freshAgeKey: ageKey
+				});
+				lock.release();
+			}
 		}
 	}
 );
+
 const BuildCM = file.make(
 	(gr, f) => `${BUILD}/ttf/${gr}/${f}.charmap.mpz`,
 	async (target, output, gr, f) => {
@@ -358,20 +435,19 @@ const BuildCM = file.make(
 	}
 );
 
-function formatSuffix(fmt, unhinted) {
-	return fmt + (unhinted ? "-unhinted" : "");
-}
-
 const DistHintedTTF = file.make(
 	(gr, fn) => `${DIST}/${gr}/ttf/${fn}.ttf`,
 	async (target, out, gr, fn) => {
-		const [{ hintParams }, hint] = await target.need(FontInfoOf(fn), CheckTtfAutoHintExists);
+		const [fi, hint] = await target.need(FontInfoOf(fn), CheckTtfAutoHintExists);
 		const [from] = await target.need(DistUnhintedTTF(gr, fn), de`${out.dir}`);
 		echo.action(echo.hl.command(`Hint TTF`), from.full, echo.hl.operator("->"), out.full);
-		await silently.run(hint, hintParams, from.full, out.full);
+		await silently.run(hint, fi.hintParams, from.full, out.full);
 	}
 );
 
+function formatSuffix(fmt, unhinted) {
+	return fmt + (unhinted ? "-unhinted" : "");
+}
 const DistWoff2 = file.make(
 	(gr, fn, unhinted) => `${DIST}/${gr}/${formatSuffix("woff2", unhinted)}/${fn}.woff2`,
 	async (target, out, group, f, unhinted) => {
@@ -562,15 +638,14 @@ function fnStandardTtc(fIsGlyfTtc, prefix, suffixMapping, sfi) {
 ///////////////////////////////////////////////////////////
 
 const SpecificTtc = task.group(`ttc`, async (target, cgr) => {
-	const outputDir = `dist/.ttc/${cgr}`;
-	const [cPlan] = await target.need(CollectPlans, de(outputDir));
+	const [cPlan] = await target.need(CollectPlans);
 	const ttcFiles = Array.from(Object.keys(cPlan[cgr].ttcComposition));
-	const [files] = await target.need(ttcFiles.map(pt => CollectedTtcFile(cgr, pt)));
-	for (const file of files) await cp(file.full, `${outputDir}/${file.base}`);
+	await target.need(ttcFiles.map(pt => CollectedTtcFile(cgr, pt)));
 });
 const SpecificSuperTtc = task.group(`super-ttc`, async (target, cgr) => {
 	await target.need(CollectedSuperTtcFile(cgr));
 });
+
 const CollectedSuperTtcFile = file.make(
 	cgr => `${DIST_SUPER_TTC}/${cgr}.ttc`,
 	async (target, out, cgr) => {
@@ -581,7 +656,7 @@ const CollectedSuperTtcFile = file.make(
 	}
 );
 const CollectedTtcFile = file.make(
-	(cgr, f) => `${BUILD}/ttc-collect/${cgr}/${f}.ttc`,
+	(cgr, f) => `${DIST_TTC}/${cgr}/${f}.ttc`,
 	async (target, out, cgr, f) => {
 		const [cp] = await target.need(CollectPlans, de`${out.dir}`);
 		const parts = Array.from(new Set(cp[cgr].ttcComposition[f]));
@@ -590,13 +665,14 @@ const CollectedTtcFile = file.make(
 	}
 );
 const GlyfTtc = file.make(
-	(cgr, f) => `${BUILD}/glyf-ttc/${cgr}/${f}.ttc`,
+	(cgr, f) => `${GLYF_TTC}/${cgr}/${f}.ttc`,
 	async (target, out, cgr, f) => {
 		const [cp] = await target.need(CollectPlans);
 		const parts = cp[cgr].glyfTtcComposition[f];
 		await buildGlyphSharingTtc(target, parts, out);
 	}
 );
+
 async function buildCompositeTtc(out, inputs) {
 	const inputPaths = inputs.map(f => f.full);
 	await run(TTCIZE, ["-o", out.full], inputPaths);
@@ -622,7 +698,7 @@ const TtcZip = file.make(
 		const [cPlan] = await target.need(CollectPlans, de`${out.dir}`);
 		const ttcFiles = Array.from(Object.keys(cPlan[cgr].ttcComposition));
 		await target.need(ttcFiles.map(pt => CollectedTtcFile(cgr, pt)));
-		await CreateGroupArchiveFile(`${BUILD}/ttc-collect/${cgr}`, out, `*.ttc`);
+		await CreateGroupArchiveFile(`${DIST_TTC}/${cgr}`, out, `*.ttc`);
 	}
 );
 const SuperTtcZip = file.make(
@@ -667,7 +743,12 @@ async function CreateGroupArchiveFile(dir, out, ...files) {
 	const relOut = Path.relative(dir, out.full);
 	await rm(out.full);
 	echo.action(echo.hl.command("Create Archive"), out.full);
-	await cd(dir).silently.run(["7z", "a"], ["-tzip", "-r", "-mx=9", "-mmt=off"], relOut, ...files);
+	await cd(dir).silently.run(
+		[SEVEN_ZIP, "a"],
+		["-tzip", "-r", "-mx=9", "-mmt=off"],
+		relOut,
+		...files
+	);
 }
 
 ///////////////////////////////////////////////////////////
@@ -835,11 +916,10 @@ const ReleaseNotesFile = file.make(
 	version => `${ARCHIVE_DIR}/release-notes-${version}.md`,
 	async (t, out, version) => {
 		await t.need(Version, UtilScripts, de(ARCHIVE_DIR));
-		const [changeFiles, rpFiles] = await t.need(ChangeFileList(), ReleaseNotePackagesFile);
+		const [changeFiles] = await t.need(ChangeFileList());
 		await t.need(changeFiles.map(fu));
 		await node("utility/generate-release-note/release-note.mjs", {
 			version,
-			releasePackagesJsonPath: rpFiles.full,
 			outputPath: out.full
 		});
 	}
@@ -848,9 +928,7 @@ const PackageListFile = file.make(
 	version => `doc/PACKAGE-LIST.md`,
 	async (t, out, version) => {
 		await t.need(Version, UtilScripts, de(ARCHIVE_DIR));
-		const [changeFiles, rpFiles] = await t.need(ChangeFileList(), ReleaseNotePackagesFile);
-		await t.need(changeFiles.map(fu));
-
+		const [rpFiles] = await t.need(ReleaseNotePackagesFile);
 		await node("utility/generate-release-note/package-list.mjs", {
 			version,
 			releasePackagesJsonPath: rpFiles.full,
@@ -902,13 +980,18 @@ const ChangeFileList = oracle.make(
 //////                   Entries                     //////
 ///////////////////////////////////////////////////////////
 
-phony(`clean`, async () => {
+const Clean = task(`clean`, async () => {
 	await rm(BUILD);
 	await rm(DIST);
 	await rm(ARCHIVE_DIR);
 	build.deleteJournal();
 });
-phony(`release`, async target => {
+
+const Release = task(`release`, async target => {
+	await target.need(ReleaseArchives, SampleImages, Pages, AmendReadme, ReleaseNotes, ChangeLog);
+});
+
+const ReleaseArchives = task(`release:archives`, async target => {
 	const [version, collectPlans] = await target.need(Version, CollectPlans);
 	let goals = [];
 	for (const [cgr, plan] of Object.entries(collectPlans)) {
@@ -927,8 +1010,6 @@ phony(`release`, async target => {
 	// Create hash of packages
 	await target.need(fu`utility/create-sha-file.mjs`);
 	await node("utility/create-sha-file.mjs", "doc/packages-sha.txt", archiveFiles);
-	// Images and release notes
-	await target.need(SampleImages, Pages, AmendReadme, ReleaseNotes, ChangeLog);
 });
 
 ///////////////////////////////////////////////////////////

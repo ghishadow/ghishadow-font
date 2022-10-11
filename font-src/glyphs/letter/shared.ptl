@@ -1,7 +1,7 @@
 $$include '../../meta/macros.ptl'
 
 import [mix clamp fallback] from"../../support/utils.mjs"
-import [Dotless CvDecompose RightDependentTrigger RightDependentLink] from"../../support/gr.mjs"
+import [Dotless CvDecompose RightDependentTrigger RightDependentLink DependentSelector] from"../../support/gr.mjs"
 import [DesignParameters] from"../../meta/aesthetics.mjs"
 
 glyph-module
@@ -11,12 +11,21 @@ glyph-block Letter-Shared : begin
 	glyph-block-import Common-Derivatives
 
 	glyph-block-export CreateAccentedComposition
-	define [CreateAccentedComposition dst u srcGid accentGid fDontDecompose]
+	define [CreateAccentedComposition dst u srcGid accentGid]
 		derive-multi-part-glyphs dst u { srcGid accentGid } : function [gns gr] : glyph-proc
 			local { base mark } gns
 			include [refer-glyph base] AS_BASE ALSO_METRICS
 			include [refer-glyph mark]
 			if (!gr && accentGid === 'dotAbove') : Dotless.set currentGlyph base
+
+	glyph-block-export CreateOgonekComposition
+	define [CreateOgonekComposition dst u srcGid]
+		derive-multi-part-glyphs dst u { srcGid 'ogonekBelow' 'ogonekTR' } : function [gns gr] : glyph-proc
+			local { base markBelow markTR } gns
+			include [refer-glyph base] AS_BASE ALSO_METRICS
+			if currentGlyph.baseAnchors.trailing
+				then : include [refer-glyph markTR]
+				else : include [refer-glyph markBelow]
 
 	glyph-block-export CreateCommaCaronComposition
 	define [CreateCommaCaronComposition dst u sourceGid]
@@ -35,13 +44,20 @@ glyph-block Letter-Shared : begin
 			foreach accentGid [items-of accentGids] : include [refer-glyph accentGid]
 			if (!fDontDecompose && !gr) : CvDecompose.set currentGlyph { src :: accentGids }
 
-	glyph-block-export CreateRightDependentComposite
-	define [CreateRightDependentComposite gidDst unicode gidPart1 gidPart2] : begin
-		derive-multi-part-glyphs gidDst unicode { gidPart1 gidPart2 } : function [src] : glyph-proc
-			local { a b } src
-			local trigger : RightDependentTrigger.get : query-glyph b
-			local kernel : [RightDependentLink.get [query-glyph a] trigger] || a
-			include [refer-glyph kernel] AS_BASE ALSO_METRICS
+	glyph-block-export CreateDependentComposite
+	define [CreateDependentComposite gidDst unicode gidPart1 gidPart2Map] : begin
+		local sourceGidList { gidPart1 }
+		local keyToIndexMap {.}
+		foreach { key g } [pairs-of gidPart2Map] : begin
+			set keyToIndexMap.(key) sourceGidList.length
+			sourceGidList.push g
+
+		derive-multi-part-glyphs gidDst unicode sourceGidList : function [src] : glyph-proc
+			local a src.0
+			local selector : DependentSelector.get : query-glyph a
+			local b src.(keyToIndexMap.(selector))
+
+			include [refer-glyph a] AS_BASE ALSO_METRICS
 			include [refer-glyph b]
 
 	glyph-block-export SetGrekUpperTonos
@@ -457,11 +473,20 @@ glyph-block Letter-Shared-Shapes : begin
 	define VJutSw : AdviceStroke 3.5
 
 	glyph-block-export CyrDescender
-	define [CyrDescender] : params [x [connex 0.5] [overflow nothing]] : begin
-		local descenderOverflow : fallback overflow SideJut
-		return : union
-			VBarRight (x + descenderOverflow + 0.125 * Stroke) (HalfStroke - LongJut) Stroke VJutSw
-			HBarTop (x - connex * Stroke * HVContrast) (x + descenderOverflow) Stroke
+	define [CyrDescender] : params [x [connex 0.5] [overflow nothing]] : glyph-proc
+		local attachAnchor currentGlyph.baseAnchors.cyrlDescenderAttach
+		if attachAnchor
+		: then : begin
+			local attach : currentGlyph.gizmo.unapply attachAnchor
+			local descenderOverflow : fallback overflow SideJut
+			include : union
+				VBarRight attach.x (HalfStroke - LongJut) attach.y VJutSw
+				HBarTop (attach.x - connex * Stroke * HVContrast) attach.x attach.y
+		: else : begin
+			local descenderOverflow : fallback overflow SideJut
+			include : union
+				VBarRight (x + descenderOverflow + 0.125 * Stroke) (HalfStroke - LongJut) Stroke VJutSw
+				HBarTop (x - connex * Stroke * HVContrast) (x + descenderOverflow) Stroke
 
 	glyph-block-export CyrHookDescender
 	define [CyrHookDescender] : params [x [connex 0.5] [overflow nothing]] : begin
