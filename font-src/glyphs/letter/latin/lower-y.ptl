@@ -1,7 +1,7 @@
 $$include '../../../meta/macros.ptl'
 
 import [mix linreg clamp fallback] from"../../../support/utils.mjs"
-import [LowerYDotAtBelow Dotless CvDecompose MathSansSerif] from"../../../support/gr.mjs"
+import [LowerYDotAtBelow Dotless CvDecompose MathSansSerif OgonekTrY] from"../../../support/gr.mjs"
 
 glyph-module
 
@@ -9,6 +9,8 @@ glyph-block Letter-Latin-Lower-Y : begin
 	glyph-block-import CommonShapes
 	glyph-block-import Common-Derivatives
 	glyph-block-import Letter-Shared : CreateAccentedComposition
+	glyph-block-import Mark-Shared-Metrics : markExtend markStroke markStress markFine
+	glyph-block-import Mark-Above : aboveMarkTop aboveMarkBot aboveMarkMid aboveMarkStack
 	glyph-block-import Mark-Below : belowMarkStack
 	glyph-block-import Letter-Shared-Shapes : nShoulder FlatHookDepth SerifFrame
 
@@ -62,8 +64,21 @@ glyph-block Letter-Latin-Lower-Y : begin
 				curl x (top - ds) [widths.heading hl hr Downward]
 				quadControls 0 dpy1 16
 
+		define [yOgonekAttach top bottom shrink hooktop] : glyph-proc
+			define {ds ds2} : CalcDS top bottom
+			define coJoinX : if (straightBar && (! hooktop)) yrstroker [mix yrstrokel yrstroker px1]
+			define coJoinY : if (straightBar && (! hooktop)) top       [mix (bottom + ds2) (top - ds) py1]
+			define joinX : mix yrstrokel yrstroker (1 - px2)
+			define joinY : mix (bottom + ds2) (top - ds) (1 - py2)
+
+			define anchorX : mix coJoinX joinX ((0 - coJoinY) / (joinY - coJoinY))
+			set-base-anchor 'trailing' anchorX 0
+			OgonekTrY.set currentGlyph
+
 		define [yBaseKnots top bottom shrink hooktop] : begin
-			local {ds ds2} : CalcDS top bottom
+			define {ds ds2} : CalcDS top bottom
+			define coJoinX : mix yrstrokel yrstroker px1
+			define coJoinY : mix (bottom + ds2) (top - ds) py1
 			define joinX : mix yrstrokel yrstroker (1 - px2)
 			define joinY : mix (bottom + ds2) (top - ds) (1 - py2)
 			define [ConnectZ shrink] : curl joinX joinY [widths.rhs : Stroke * shrink]
@@ -71,10 +86,7 @@ glyph-block Letter-Latin-Lower-Y : begin
 			return : list
 				if (straightBar && (! hooktop))
 					then : list
-					else : list
-						flat
-							mix yrstrokel yrstroker px1
-							mix (bottom + ds2) (top - ds) py1
+					else : list [flat coJoinX coJoinY]
 
 				piecewise
 					useStraightBottom : list
@@ -140,6 +152,8 @@ glyph-block Letter-Latin-Lower-Y : begin
 		define [SmallYShape top bottom] : glyph-proc
 			local {ds ds2} : CalcDS top bottom
 
+			include : yOgonekAttach top bottom yshrink
+
 			include : intersection
 				SmallYStrokeSplitMask top bottom false 1
 				dispiro
@@ -167,6 +181,8 @@ glyph-block Letter-Latin-Lower-Y : begin
 		define [SmallYHookTopShape top bottom] : glyph-proc
 			local {ds ds2} : CalcDS top bottom
 			local joinHeight : yJoinHeight ds ds2 top bottom true
+
+			include : yOgonekAttach top bottom yshrink true
 
 			include : intersection
 				SmallYStrokeSplitMask top bottom true 1
