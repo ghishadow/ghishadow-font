@@ -1,5 +1,20 @@
 ## Modifications since version 2.x
 
+### 16.3.6
+
+ * Fix shape of y-ogonek (used by Elfdalian) (#1437).
+
+
+### 16.3.5
+
+ * Update Powerline line number and column number symbol (`U+E0A1`, `U+E0A2`) to follow other fonts’ design.
+
+
+### 16.3.4
+
+ * Fix inconsistent serifs in Exists and Forall sign (#1435).
+
+
 ### 16.3.3
 
  * Fix application of CV/SS on certain composites and some of the sample images (#1433).
