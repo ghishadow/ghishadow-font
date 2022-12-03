@@ -175,6 +175,29 @@ define [buildLigationsImpl sink para featureName mappedFeature rankedLookups] : 
 				chain-rule [Cg] [acskip] centerizeR
 				chain-rule [Cg] centerizeR
 
+	do "slash-asterisk" : if [hasLG 'slash-asterisk'] : begin
+		CreateLigationLookup : list
+			chain-rule # /*
+				{'slash'}                    ~> look-around
+				{'asterisk'}                 ~> [just 'asterisk/high']
+			chain-rule # */
+				{'asterisk'}                 ~> [just 'asterisk/low']
+				{'slash'}                    ~> look-around
+		CreateReverseLigationLookup : list
+			reverse-rule
+				{'asterisk'}                 ~> [just 'asterisk/low']
+				{'asterisk/low'}             ~> look-around
+			reverse-rule
+				{'asterisk/high'}            ~> [just 'asterisk/sMid/ligComment']
+				{'asterisk/low'}             ~> look-around
+		CreateLigationLookup : list
+			chain-rule
+				{'asterisk/high'}            ~> look-around
+				{'asterisk'}                 ~> {'asterisk/high'}
+			chain-rule
+				{'asterisk/sMid/ligComment'} ~> look-around
+				{'asterisk' 'asterisk/low'}  ~> [just 'asterisk/sMid/ligComment']
+
 	do "Kern Dotty" : if [hasLG 'kern-dotty'] : begin
 		define dottyPunctuationSets : list
 			list { "period" "period/mid" } { "colon" "colon/mid" "question" "exclam" }
@@ -815,65 +838,62 @@ define [buildLigationsImpl sink para featureName mappedFeature rankedLookups] : 
 					equal       ~> {'equal.cf'}
 
 	# <= and >=
-	do "inequals" : if [hasLG 'ineq'] : begin
-		CreateLigationLookup : list
-			# Disable regular expression lookaheads
-			chain-rule
-				{'parenLeft'} ~> look-around
-				{'question'}  ~> look-around
-				regexLookAround ~> advance
-				regexLookAround ~> advance
-				regexLookAround ~> advance
-				regexLookAround ~> advance
-			chain-rule
-				{'parenLeft'} ~> look-around
-				{'question'}  ~> look-around
-				regexLookAround ~> advance
-				regexLookAround ~> advance
-				regexLookAround ~> advance
-			chain-rule
-				{'parenLeft'} ~> look-around
-				{'question'}  ~> look-around
-				regexLookAround ~> advance
-				regexLookAround ~> advance
+	do "inequals" : CreateLigationLookup : list
+		# Disable regular expression lookaheads
+		if [hasLG 'ineq'] :  chain-rule
+			{'parenLeft'} ~>look-around
+			{'question'}  ~> look-around
+			regexLookAround ~> advance
+			regexLookAround ~> advance
+			regexLookAround ~> advance
+			regexLookAround ~> advance
+		if [hasLG 'ineq'] : chain-rule
+			{'parenLeft'} ~> look-around
+			{'question'}  ~> look-around
+			regexLookAround ~> advance
+			regexLookAround ~> advance
+			regexLookAround ~> advance
+		if [hasLG 'ineq'] : chain-rule
+			{'parenLeft'} ~> look-around
+			{'question'}  ~> look-around
+			regexLookAround ~> advance
+			regexLookAround ~> advance
 
-			# <>
-			piecewise
-				[hasLG 'ltgt-diamond'] : chain-rule
-					lessAndEquiv    ~> [just 'less.lig.diamond']
-					greaterAndEquiv ~> [just 'greater.lig.diamond']
-				[hasLG 'ltgt-diamond-tag'] : chain-rule
-					lessAndEquiv    ~> [just 'less.lig.diamond.tag']
-					greaterAndEquiv ~> [just 'greater.lig.diamond.tag']
-				[hasLG 'ltgt-ne'] : chain-rule
-					lessAndEquiv    ~> [just 'neq.bar-only.2l']
-					greaterAndEquiv ~> [just 'equal.fc+cf']
+		# <>
+		piecewise
+			[hasLG 'ltgt-diamond'] : chain-rule
+				lessAndEquiv    ~> [just 'less.lig.diamond']
+				greaterAndEquiv ~> [just 'greater.lig.diamond']
+			[hasLG 'ltgt-diamond-tag'] : chain-rule
+				lessAndEquiv    ~> [just 'less.lig.diamond.tag']
+				greaterAndEquiv ~> [just 'greater.lig.diamond.tag']
+			[hasLG 'ltgt-ne'] : chain-rule
+				lessAndEquiv    ~> [just 'neq.bar-only.2l']
+				greaterAndEquiv ~> [just 'equal.fc+cf']
 
-			# <=, >=
-			chain-rule
-				[acops]               ~> look-around
-				lessOrGreaterAndEquiv ~> advance
-				equal                 ~> advance
-			chain-rule
-				lessOrGreaterAndEquiv ~> advance
-				equal                 ~> advance
-				[acops]               ~> look-around
-			chain-rule
-				lessAndEquiv          ~> [just 'less.lig2']
-				equal                 ~> {'eq.at-lteq.lig2'}
-			chain-rule
-				greaterAndEquiv       ~> [just 'greater.lig2']
-				equal                 ~> {'eq.at-gteq.lig2'}
+		# <=, >=
+		if [hasLG 'ineq'] : chain-rule
+			[acops]               ~> look-around
+			lessOrGreaterAndEquiv ~> advance
+			equal                 ~> advance
+		if [hasLG 'ineq'] : chain-rule
+			lessOrGreaterAndEquiv ~> advance
+			equal                 ~> advance
+			[acops]               ~> look-around
+		if [hasLG 'ineq'] : chain-rule
+			lessAndEquiv          ~> [just 'less.lig2']
+			equal                 ~> {'eq.at-lteq.lig2'}
+		if [hasLG 'ineq'] : chain-rule
+			greaterAndEquiv       ~> [just 'greater.lig2']
+			equal                 ~> {'eq.at-gteq.lig2'}
 
-			# </, /> and </>
-			piecewise
-				[hasLG 'ltgt-slash-tag'] : chain-rule
-					lessAndEquiv    ~> [just 'less.lig.tag-slash']
-					slash           ~> look-around
-			piecewise
-				[hasLG 'ltgt-slash-tag'] : chain-rule
-					slash           ~> look-around
-					greaterAndEquiv ~> [just 'greater.lig.tag-slash']
+		# </, /> and </>
+		if [hasLG 'ltgt-slash-tag'] : chain-rule
+			lessAndEquiv    ~> [just 'less.lig.tag-slash']
+			slash           ~> look-around
+		if [hasLG 'ltgt-slash-tag'] : chain-rule
+			slash           ~> look-around
+			greaterAndEquiv ~> [just 'greater.lig.tag-slash']
 
 	# :>
 	do "colon-less-greater" : if [hasLG 'colon-greater'] : begin
